@@ -70,7 +70,13 @@ func (d *myDriver) Create(req *volume.CreateRequest) error {
 func (d *myDriver) Remove(req *volume.RemoveRequest) error {
     d.m.Lock()
     defer d.m.Unlock()
-
+    
+    mountPath, exists := d.volumes[req.Name]
+    if !exists {
+        return fmt.Errorf("volume %s not found", req.Name)
+    }
+    os.RemoveAll(mountPath)
+    
     delete(d.volumes, req.Name)
     log.Printf("Removed volume: %s\n", req.Name)
     return nil
