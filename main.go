@@ -5,6 +5,7 @@ import (
     "log"
     "sync"
     "os"
+    "path/filepath"
 
     // go-plugins-helpers for volume
     "github.com/docker/go-plugins-helpers/volume"
@@ -14,36 +15,65 @@ import (
 type myDriver struct {
     // A simple in-memory map: volumeName -> mountPath
     // Use a mutex or sync.Map to protect concurrent map access
-    volumes map[string]string
+    // volumes map[string]string
     m       sync.Mutex
+    rootPath string
 }
+
+//func newMyDriver() *myDriver {
+//    return &myDriver{
+//        volumes: make(map[string]string),
+//    }
+//}
 
 func newMyDriver() *myDriver {
-    return &myDriver{
-        volumes: make(map[string]string),
+    //rootPath := os.Getenv("ROOT_PATH")
+    envRootPath := "/tmp/dockvolumes"
+    if envRootPath == "" {
+        envRootPath = "/var/lib/myvolplugin"
     }
+    return &myDriver{ rootPath: envRootPath }
 }
 
-func (d *myDriver) Create(req *volume.CreateRequest) error {
-    d.m.Lock()
-    defer d.m.Unlock()
 
-    if _, exists := d.volumes[req.Name]; exists {
-        // If the volume already exists, do nothing or return an error.
+//func (d *myDriver) Create(req *volume.CreateRequest) error {
+//    d.m.Lock()
+//    defer d.m.Unlock()
+//
+//    if _, exists := d.volumes[req.Name]; exists {
+//        // If the volume already exists, do nothing or return an error.
+//        return nil
+//    }
+//
+//    mountPath := fmt.Sprintf("/tmp/%s", req.Name)
+//
+//    // Create the directory on the host so Docker can mount it.
+//    if err := os.MkdirAll(mountPath, 0755); err != nil {
+//        return err
+//    }
+//
+//    d.volumes[req.Name] = mountPath
+//    log.Printf("Created volume: %s at path %s\n", req.Name, mountPath)
+//    return nil
+//}
+
+func (d *myDriver) Create(req *volume.CreateRequest) error {
+    fullPath := filepath.Join(d.rootPath, req.Name)
+
+    // If the folder exists, do nothing.
+    // (Alternatively, return an error if you want to forbid overwriting.)
+    if _, err := os.Stat(fullPath); err == nil {
         return nil
     }
 
-    mountPath := fmt.Sprintf("/tmp/%s", req.Name)
-
-    // Create the directory on the host so Docker can mount it.
-    if err := os.MkdirAll(mountPath, 0755); err != nil {
-        return err
+    // Create the directory
+    if err := os.MkdirAll(fullPath, 0755); err != nil {
+        return fmt.Errorf("failed to create directory for volume %s: %v", req.Name, err)
     }
 
-    d.volumes[req.Name] = mountPath
-    log.Printf("Created volume: %s at path %s\n", req.Name, mountPath)
     return nil
 }
+
 
 // Create is called when Docker wants to create a volume.
 // You can store metadata or provision real storage here.
@@ -67,96 +97,196 @@ func (d *myDriver) Create(req *volume.CreateRequest) error {
 //}
 
 // Remove is called when Docker wants to remove a volume.
+//func (d *myDriver) Remove(req *volume.RemoveRequest) error {
+//    d.m.Lock()
+//    defer d.m.Unlock()
+//    mountPath, exists := d.volumes[req.Name]
+//    if !exists {
+//        return fmt.Errorf("volume %s not found", req.Name)
+//    }
+//    os.RemoveAll(mountPath)
+//    delete(d.volumes, req.Name)
+//    log.Printf("Removed volume: %s\n", req.Name)
+//    return nil
+//}
+
 func (d *myDriver) Remove(req *volume.RemoveRequest) error {
-    d.m.Lock()
-    defer d.m.Unlock()
-    
-    mountPath, exists := d.volumes[req.Name]
-    if !exists {
-        return fmt.Errorf("volume %s not found", req.Name)
+    fullPath := filepath.Join(d.rootPath, req.Name)
+
+    // If it doesn't exist, do nothing
+    if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+        return nil
     }
-    os.RemoveAll(mountPath)
-    
-    delete(d.volumes, req.Name)
-    log.Printf("Removed volume: %s\n", req.Name)
+
+    // In a real plugin, you might check if it's still in use before removing.
+    if err := os.RemoveAll(fullPath); err != nil {
+        return fmt.Errorf("failed to remove volume folder: %v", err)
+    }
     return nil
 }
 
 // Mount is called when a container starts and the volume is requested.
 // Docker wants you to return a path on the host filesystem that it can bind-mount.
-func (d *myDriver) Mount(req *volume.MountRequest) (*volume.MountResponse, error) {
-    d.m.Lock()
-    defer d.m.Unlock()
-
-    mountPath, exists := d.volumes[req.Name]
-    if !exists {
-        return nil, fmt.Errorf("volume %s not found", req.Name)
-    }
+//func (d *myDriver) Mount(req *volume.MountRequest) (*volume.MountResponse, error) {
+//    d.m.Lock()
+//    defer d.m.Unlock()
+//
+//    mountPath, exists := d.volumes[req.Name]
+//    if !exists {
+//        return nil, fmt.Errorf("volume %s not found", req.Name)
+//    }
 
     // In a real plugin, you'd do actual mounting logic here (e.g. `mount -t nfs ...`).
     // For demonstration, we just rely on the path we stored.
 
-    log.Printf("Mounting volume: %s at path %s (ID: %s)\n", req.Name, mountPath, req.ID)
-    return &volume.MountResponse{Mountpoint: mountPath}, nil
-}
+//    log.Printf("Mounting volume: %s at path %s (ID: %s)\n", req.Name, mountPath, req.ID)
+//    return &volume.MountResponse{Mountpoint: mountPath}, nil
+//}
 
 // Unmount is called when a container using the volume stops or no longer needs the volume.
-func (d *myDriver) Unmount(req *volume.UnmountRequest) error {
-    d.m.Lock()
-    defer d.m.Unlock()
+//func (d *myDriver) Unmount(req *volume.UnmountRequest) error {
+//    d.m.Lock()
+//    defer d.m.Unlock()
+//
+//    mountPath, exists := d.volumes[req.Name]
+//    if !exists {
+//        return fmt.Errorf("volume %s not found", req.Name)
+//    }
+//
+//    log.Printf("Unmounting volume: %s from path %s (ID: %s)\n", req.Name, mountPath, req.ID)
+//    // In a real plugin, you might do `umount(mountPath)`.
+//    return nil
+//}
 
-    mountPath, exists := d.volumes[req.Name]
-    if !exists {
-        return fmt.Errorf("volume %s not found", req.Name)
+func (d *myDriver) Mount(req *volume.MountRequest) (*volume.MountResponse, error) {
+    fullPath := filepath.Join(d.rootPath, req.Name)
+
+    // Just verify it exists
+    if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+        return nil, fmt.Errorf("volume %s not found", req.Name)
     }
 
-    log.Printf("Unmounting volume: %s from path %s (ID: %s)\n", req.Name, mountPath, req.ID)
-    // In a real plugin, you might do `umount(mountPath)`.
+    // Return the path so Docker can do a bind mount
+    return &volume.MountResponse{Mountpoint: fullPath}, nil
+}
+
+func (d *myDriver) Unmount(req *volume.UnmountRequest) error {
+    // For local directories, there's nothing to unmount, but let's check existence
+    fullPath := filepath.Join(d.rootPath, req.Name)
+    if _, err := os.Stat(fullPath); os.IsNotExist(err) {
+        return nil
+    }
+
+    // If you have something more advanced, handle it here
     return nil
 }
 
-// List returns all volumes that this driver knows about.
-func (d *myDriver) List() (*volume.ListResponse, error) {
-    d.m.Lock()
-    defer d.m.Unlock()
 
+// List finds all directories in d.rootPath and reports them as volumes.
+func (d *myDriver) List() (*volume.ListResponse, error) {
+    // We'll store the discovered volumes in 'vols'
     var vols []*volume.Volume
-    for name, path := range d.volumes {
-        vols = append(vols, &volume.Volume{
-            Name:       name,
-            Mountpoint: path,
-        })
+
+    entries, err := os.ReadDir(d.rootPath)
+    if err != nil {
+        // If the rootPath does not exist or can't be read, log it and return no volumes
+        // or return an error. Your choice depends on your plugin’s design.
+        return &volume.ListResponse{Volumes: vols}, nil
     }
+
+    for _, entry := range entries {
+        // Only treat subdirectories as volumes
+        if entry.IsDir() {
+            volName := entry.Name()
+            mountPath := filepath.Join(d.rootPath, volName)
+            vols = append(vols, &volume.Volume{
+                Name:       volName,
+                Mountpoint: mountPath,
+            })
+        }
+    }
+
     return &volume.ListResponse{Volumes: vols}, nil
 }
 
-// Get returns the volume info requested.
-func (d *myDriver) Get(req *volume.GetRequest) (*volume.GetResponse, error) {
-    d.m.Lock()
-    defer d.m.Unlock()
+// List returns all volumes that this driver knows about.
+//func (d *myDriver) List() (*volume.ListResponse, error) {
+//    d.m.Lock()
+//    defer d.m.Unlock()
 
-    path, exists := d.volumes[req.Name]
-    if !exists {
+//    var vols []*volume.Volume
+//    for name, path := range d.volumes {
+//        vols = append(vols, &volume.Volume{
+//            Name:       name,
+//            Mountpoint: path,
+//        })
+//    }
+//    return &volume.ListResponse{Volumes: vols}, nil
+//}
+
+
+// Get returns the volume info requested.
+//func (d *myDriver) Get(req *volume.GetRequest) (*volume.GetResponse, error) {
+//    d.m.Lock()
+//    defer d.m.Unlock()
+//
+//    path, exists := d.volumes[req.Name]
+//    if !exists {
+//        return nil, fmt.Errorf("volume %s not found", req.Name)
+//    }
+//    vol := &volume.Volume{
+//        Name:       req.Name,
+//        Mountpoint: path,
+//    }
+//    return &volume.GetResponse{Volume: vol}, nil
+//}
+func (d *myDriver) Get(req *volume.GetRequest) (*volume.GetResponse, error) {
+    fullPath := filepath.Join(d.rootPath, req.Name)
+
+    // Check if the directory (i.e., volume) exists
+    fi, err := os.Stat(fullPath)
+    if os.IsNotExist(err) || (err == nil && !fi.IsDir()) {
         return nil, fmt.Errorf("volume %s not found", req.Name)
+    } else if err != nil {
+        return nil, err
     }
+
+    // Directory exists, so return the volume info
     vol := &volume.Volume{
         Name:       req.Name,
-        Mountpoint: path,
+        Mountpoint: fullPath,
     }
     return &volume.GetResponse{Volume: vol}, nil
 }
 
-func (d *myDriver) Path(req *volume.PathRequest) (*volume.PathResponse, error) {
-    d.m.Lock()
-    defer d.m.Unlock()
 
-    path, ok := d.volumes[req.Name]
-    if !ok {
+//func (d *myDriver) Path(req *volume.PathRequest) (*volume.PathResponse, error) {
+//    d.m.Lock()
+//    defer d.m.Unlock()
+//
+//    path, ok := d.volumes[req.Name]
+//    if !ok {
+//        return nil, fmt.Errorf("volume %s not found", req.Name)
+//    }
+//
+//    return &volume.PathResponse{Mountpoint: path}, nil
+//}
+func (d *myDriver) Path(req *volume.PathRequest) (*volume.PathResponse, error) {
+    // Build the full path by joining ROOT_PATH and the volume name
+    fullPath := filepath.Join(d.rootPath, req.Name)
+
+    // Check if the directory exists on disk
+    fi, err := os.Stat(fullPath)
+    if os.IsNotExist(err) || (err == nil && !fi.IsDir()) {
         return nil, fmt.Errorf("volume %s not found", req.Name)
+    } else if err != nil {
+        return nil, err
     }
 
-    return &volume.PathResponse{Mountpoint: path}, nil
+    // Directory exists, so return its path
+    return &volume.PathResponse{Mountpoint: fullPath}, nil
 }
+
 
 // Capabilities tells Docker which advanced features this driver supports.
 // For example, you could say Scope = "global" if the volumes are available
