@@ -1,6 +1,6 @@
 module github.com/dlbogdan/docker-plugin-volume-test
 
-go 1.23.4
+go 1.23
 
 require (
 	github.com/Microsoft/go-winio v0.4.14 // indirect
