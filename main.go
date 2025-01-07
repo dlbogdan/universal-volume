@@ -18,8 +18,8 @@ type myDriver struct {
 }
 
 func newMyDriver() *myDriver {
-	//rootPath := os.Getenv("ROOT_PATH")
-	envRootPath := "/tmp/dockvolumes"
+	envRootPath := os.Getenv("ROOT_PATH")
+	//envRootPath := "/tmp/dockvolumes"
 	if envRootPath == "" {
 		envRootPath = "/var/lib/myvolplugin"
 	}
