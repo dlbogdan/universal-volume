@@ -19,8 +19,9 @@ type myDriver struct {
 
 func newMyDriver() *myDriver {
 	envRootPath := os.Getenv("ROOT_PATH")
-	//envRootPath := "/tmp/dockvolumes"
 	if envRootPath == "" {
+		// Default to /var/lib/myvolplugin if ROOT_PATH is not set
+		log.Println("ROOT_PATH not set, using /var/lib/myvolplugin")
 		envRootPath = "/var/lib/myvolplugin"
 	}
 	return &myDriver{rootPath: envRootPath}
@@ -39,6 +40,7 @@ func (d *myDriver) Create(req *volume.CreateRequest) error {
 	if err := os.MkdirAll(fullPath, 0755); err != nil {
 		return fmt.Errorf("failed to create directory for volume %s: %v", req.Name, err)
 	}
+
 	log.Printf("Created volume: %s\n", req.Name)
 	return nil
 }
