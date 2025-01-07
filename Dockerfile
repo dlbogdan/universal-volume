@@ -34,5 +34,6 @@ RUN apt-get update && apt-get install -yq \
         kmod vim \
     && mkdir -p /run/docker/plugins
 
-#COPY --from=go-builder /go/bin/docker-volume-rbd .
-#CMD ["docker-volume-rbd"]
+
+COPY --from=go-builder /go/bin/docker-plugin-volume-test .
+CMD ["docker-plugin-volume-test"]
