@@ -9,8 +9,6 @@ all: clean rootfs create
 clean:
 	@echo "### rm ./plugin"
 	@rm -rf ./plugin
-	@echo "### rm ./vendor"
-	@rm -rf ./vendor
 
 .PHONY: rootfs
 rootfs:
