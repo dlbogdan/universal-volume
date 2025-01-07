@@ -153,7 +153,7 @@ func (d *myDriver) Path(req *volume.PathRequest) (*volume.PathResponse, error) {
 func (d *myDriver) Capabilities() *volume.CapabilitiesResponse {
 	return &volume.CapabilitiesResponse{
 		Capabilities: volume.Capability{
-			Scope: "local",
+			Scope: "global",
 		},
 	}
 }
