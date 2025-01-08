@@ -1,24 +1,35 @@
 {
-  "Description": "My Volume Plugin",
-  "Documentation": "https://github.com/yourusername/my-volume-plugin",
+  "Description": "Docker-Plugin-Volume-Test",
+  "Documentation": "https://github.com/dlbogdan/docker-plugin-volume-test",
   "Interface": {
     "Types": ["docker.volumedriver/1.0"],
-    "Socket": "my-plugin.sock"
+    "Socket": "docker-plugin-volume-test.sock"
   },
-  "Entrypoint": ["/my-plugin"],
+  "Entrypoint": ["/docker-plugin-volume-test"],
 
   "Env": [
     {
       "Name": "ROOT_PATH",
-      // "Settable" can allow users to override the value at install time
+      "Description": "Root path for the plugin volumes",
       "Settable": ["value"],
-      "Value": "/var/lib/myvolplugin"
+      "Value": "/tmp/docker-plugin-volume-test/"
+    },
+    {
+      "Name": "DEBUG",
+      "Description": "Enable debug mode",
+      "Settable": ["value"],
+      "Value": "false"
+    },
+    {
+      "Name": "SCOPE",
+      "Description": "Scope of the mountpoint (global or local)",
+      "Settable": ["value"],
+      "Value": "global"
     }
   ],
 
   "Linux": {
     "Capabilities": [
-      // Often need CAP_SYS_ADMIN for mounting
       "CAP_SYS_ADMIN"
     ]
   },
@@ -28,6 +39,5 @@
       "Source": "/run/docker/plugins",
       "Destination": "/run/docker/plugins"
     }
-    // might need more mounts if performing real mounts, e.g. /dev, /etc, etc.
   ]
 }
