@@ -22,8 +22,8 @@ WORKDIR /go/src
 COPY go.mod go.sum ./
 RUN go mod download 
 
-#COPY go.* main.go /go/src/
-COPY . .
+COPY go.* main.go ./
+#COPY . .
 #COPY lib /go/src/lib/
 
 RUN set -ex  \
