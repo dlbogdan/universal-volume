@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"sync"
 	"syscall"
 	"time"
 
@@ -19,7 +18,7 @@ func isMountpoint(path string) (bool, error) {
 		return false, fmt.Errorf("failed to stat path: %w", err)
 	}
 
-	parentPath := path + "/.."
+	parentPath := filepath.Join(path, "..")
 	parentStat, err := os.Stat(parentPath)
 	if err != nil {
 		return false, fmt.Errorf("failed to stat parent path: %w", err)
@@ -36,7 +35,6 @@ func isMountpoint(path string) (bool, error) {
 
 // myDriver implements the volume.Driver interface
 type myDriver struct {
-	m        sync.Mutex
 	rootPath string
 }
 
