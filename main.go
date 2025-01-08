@@ -15,13 +15,13 @@ import (
 func isMountpoint(path string) (bool, error) {
 	stat, err := os.Stat(path)
 	if err != nil {
-		return false, fmt.Errorf("failed to stat path: %w", err)
+		return false, fmt.Errorf("Failed to stat path: %w", err)
 	}
 
 	parentPath := filepath.Join(path, "..")
 	parentStat, err := os.Stat(parentPath)
 	if err != nil {
-		return false, fmt.Errorf("failed to stat parent path: %w", err)
+		return false, fmt.Errorf("Failed to stat parent path: %w", err)
 	}
 
 	// Get device numbers for path and its parent
@@ -57,7 +57,7 @@ func newMyDriver() *myDriver {
 	if envScope == "global" {
 		var isMount bool
 		var err error
-		log.Printf("Scope is global. Checking if %s is a mountpoint\n", envRootPath)
+		log.Printf("Scope is global. Assuming the filesystem is distributed. Checking if %s is a mountpoint\n", envRootPath)
 		for i := 0; i < 10; i++ {
 			isMount, err = isMountpoint(envRootPath)
 			if err == nil && isMount {
