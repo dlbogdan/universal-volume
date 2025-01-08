@@ -86,7 +86,7 @@ func (d *myDriver) Create(req *volume.CreateRequest) error {
 
 	// Create the directory
 	if err := os.MkdirAll(fullPath, 0755); err != nil {
-		return fmt.Errorf("failed to create directory for volume %s: %v", req.Name, err)
+		return fmt.Errorf("Failed to create directory for volume %s: %v", req.Name, err)
 	}
 
 	log.Printf("Created volume: %s\n", req.Name)
@@ -103,7 +103,7 @@ func (d *myDriver) Remove(req *volume.RemoveRequest) error {
 
 	// In a real plugin, you might check if it's still in use before removing.
 	if err := os.RemoveAll(fullPath); err != nil {
-		return fmt.Errorf("failed to remove volume folder: %v", err)
+		return fmt.Errorf("Failed to remove volume folder: %v", err)
 	}
 	log.Printf("Removed volume: %s\n", req.Name)
 
@@ -116,7 +116,7 @@ func (d *myDriver) Mount(req *volume.MountRequest) (*volume.MountResponse, error
 	// Just verify it exists
 
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
-		return nil, fmt.Errorf("volume %s not found", req.Name)
+		return nil, fmt.Errorf("Volume %s not found", req.Name)
 	}
 	// Return the path so Docker can do a bind mount
 	return &volume.MountResponse{Mountpoint: fullPath}, nil
