@@ -73,7 +73,7 @@ func newMyDriver() *myDriver {
 			log.Fatalf("Failed to verify mountpoint after 10 attempts: %v\n", err)
 		}
 	}
-
+	envRootPath = filepath.Join(envRootPath, "volumes")
 	return &myDriver{rootPath: envRootPath}
 }
 
