@@ -6,10 +6,33 @@ import (
 	"os"
 	"path/filepath"
 	"sync"
+	"syscall"
+	"time"
 
 	// go-plugins-helpers for volume
 	"github.com/docker/go-plugins-helpers/volume"
 )
+
+func isMountpoint(path string) (bool, error) {
+	stat, err := os.Stat(path)
+	if err != nil {
+		return false, fmt.Errorf("failed to stat path: %w", err)
+	}
+
+	parentPath := path + "/.."
+	parentStat, err := os.Stat(parentPath)
+	if err != nil {
+		return false, fmt.Errorf("failed to stat parent path: %w", err)
+	}
+
+	// Get device numbers for path and its parent
+	statSys := stat.Sys().(*syscall.Stat_t)
+	parentStatSys := parentStat.Sys().(*syscall.Stat_t)
+
+	// Compare device numbers and inode numbers
+	isMount := statSys.Dev != parentStatSys.Dev || statSys.Ino == parentStatSys.Ino
+	return isMount, nil
+}
 
 // myDriver implements the volume.Driver interface
 type myDriver struct {
@@ -19,11 +42,38 @@ type myDriver struct {
 
 func newMyDriver() *myDriver {
 	envRootPath := os.Getenv("ROOT_PATH")
+	envScope := os.Getenv("SCOPE") // global or local
+
+	if envScope == "" {
+
+		// Default to global scope if SCOPE is not set
+		log.Println("SCOPE not set, using global")
+		envScope = "global"
+	}
+
 	if envRootPath == "" {
 		// Default to /var/lib/myvolplugin if ROOT_PATH is not set
 		log.Println("ROOT_PATH not set, using /var/lib/myvolplugin")
 		envRootPath = "/var/lib/myvolplugin"
 	}
+	if envScope == "global" {
+		var isMount bool
+		var err error
+		log.Printf("Scope is global. Checking if %s is a mountpoint\n", envRootPath)
+		for i := 0; i < 10; i++ {
+			isMount, err = isMountpoint(envRootPath)
+			if err == nil && isMount {
+				break
+			}
+			log.Printf("Error checking mountpoint (attempt %d): %v\n", i+1, err)
+			time.Sleep(1 * time.Second)
+		}
+
+		if err != nil {
+			log.Fatalf("Failed to verify mountpoint after 10 attempts: %v\n", err)
+		}
+	}
+
 	return &myDriver{rootPath: envRootPath}
 }
 
