@@ -18,10 +18,13 @@ ENV PATH=$GOPATH/bin:/usr/local/go/bin:$PATH
 ENV PATH=/usr/lib/go-$GO_VERSION/bin:$PATH
 RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 
-COPY go.* main.go /go/src/
-#COPY lib /go/src/lib/
+WORKDIR /go/src
+COPY go.mod go.sum ./
+RUN go mod download 
 
-WORKDIR /go/src/
+#COPY go.* main.go /go/src/
+COPY . .
+#COPY lib /go/src/lib/
 
 RUN set -ex  \
  && go mod tidy \
