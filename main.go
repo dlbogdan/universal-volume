@@ -117,7 +117,7 @@ func (d *myDriver) Mount(req *volume.MountRequest) (*volume.MountResponse, error
 	// Just verify it exists
 
 	//ceph-fuse --client_fs swarm_cephfs /mnt/swarm_cephfs/
-	if _, err := os.Stat("/mnt/swarm_cephfs"); os.IsNotExist(err) {
+	if _, err := os.Stat("/mnt/swarm_cephfs/volumes"); os.IsNotExist(err) {
 		log.Println("Mounting cephfs")
 		exec.Command("ceph-fuse", "--client_fs", "swarm_cephfs", "/mnt/swarm_cephfs").Run()
 	}
