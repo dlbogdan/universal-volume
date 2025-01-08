@@ -63,12 +63,12 @@ func newMyDriver() *myDriver {
 			if err == nil && isMount {
 				break
 			}
-			log.Printf("Error checking mountpoint (attempt %d): %v\n", i+1, err)
+			log.Printf("Error checking mountpoint (attempt %d): %v, isMount: %v\n", i+1, err, isMount)
 			time.Sleep(1 * time.Second)
 		}
 
-		if err != nil {
-			log.Fatalf("Failed to verify mountpoint after 10 attempts: %v\n", err)
+		if err != nil || !isMount {
+			log.Fatalf("Failed to verify mountpoint after 10 attempts: %v, isMount: %v\n", err, isMount)
 		}
 	}
 	envRootPath = filepath.Join(envRootPath, "volumes")
