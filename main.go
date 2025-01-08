@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"syscall"
 	"time"
@@ -112,12 +113,18 @@ func (d *myDriver) Remove(req *volume.RemoveRequest) error {
 
 func (d *myDriver) Mount(req *volume.MountRequest) (*volume.MountResponse, error) {
 	fullPath := filepath.Join(d.rootPath, req.Name)
-
+	log.Printf("Mounting volume: %s, id: %s\n", req.Name, req.ID)
 	// Just verify it exists
+
+	//ceph-fuse --client_fs swarm_cephfs /mnt/swarm_cephfs/
+	if _, err := os.Stat("/mnt/swarm_cephfs"); os.IsNotExist(err) {
+		log.Println("Mounting cephfs")
+		exec.Command("ceph-fuse", "--client_fs", "swarm_cephfs", "/mnt/swarm_cephfs").Run()
+	}
+
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 		return nil, fmt.Errorf("volume %s not found", req.Name)
 	}
-	log.Printf("Mounting volume: %s, id: %s\n", req.Name, req.ID)
 	// Return the path so Docker can do a bind mount
 	return &volume.MountResponse{Mountpoint: fullPath}, nil
 }
