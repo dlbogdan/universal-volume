@@ -5,8 +5,9 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"syscall"
 	"time"
+
+	"golang.org/x/sys/unix"
 
 	// go-plugins-helpers for volume
 	"github.com/docker/go-plugins-helpers/volume"
@@ -25,8 +26,8 @@ func isMountpoint(path string) (bool, error) {
 	}
 
 	// Get device numbers for path and its parent
-	statSys := stat.Sys().(*syscall.Stat_t)
-	parentStatSys := parentStat.Sys().(*syscall.Stat_t)
+	statSys := stat.Sys().(*unix.Stat_t)
+	parentStatSys := parentStat.Sys().(*unix.Stat_t)
 
 	// Compare device numbers and inode numbers
 	isMount := statSys.Dev != parentStatSys.Dev || statSys.Ino == parentStatSys.Ino
