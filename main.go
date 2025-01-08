@@ -116,12 +116,6 @@ func (d *myDriver) Mount(req *volume.MountRequest) (*volume.MountResponse, error
 	log.Printf("Mounting volume: %s, id: %s\n", req.Name, req.ID)
 	// Just verify it exists
 
-	//ceph-fuse --client_fs swarm_cephfs /mnt/swarm_cephfs/
-	if _, err := os.Stat("/mnt/swarm_cephfs/volumes"); os.IsNotExist(err) {
-		log.Println("Mounting cephfs")
-		exec.Command("ceph-fuse", "--client_fs", "swarm_cephfs", "/mnt/swarm_cephfs").Run()
-	}
-
 	if _, err := os.Stat(fullPath); os.IsNotExist(err) {
 		return nil, fmt.Errorf("volume %s not found", req.Name)
 	}
@@ -223,6 +217,13 @@ func main() {
 	// The first parameter is the "plugin name" (used to create the .sock file),
 	// the second is the group. 0 means 'root' by default.
 	log.Println("Starting my-volume-plugin on /run/docker/plugins/my-volume-plugin.sock ...")
+	//ceph-fuse --client_fs swarm_cephfs /mnt/swarm_cephfs/
+
+	if _, err := os.Stat("/mnt/swarm_cephfs/volumes"); os.IsNotExist(err) {
+		log.Println("Mounting cephfs")
+		exec.Command("ceph-fuse", "--client_fs", "swarm_cephfs", "/mnt/swarm_cephfs").Run()
+	}
+
 	err := h.ServeUnix("my-volume-plugin", 0)
 	if err != nil {
 		log.Fatalf("Error serving volume plugin: %v", err)
