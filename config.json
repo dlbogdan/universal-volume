@@ -6,13 +6,20 @@
     "Socket": "my-volume-plugin.sock"
   },
   "Entrypoint": ["/docker-plugin-volume-test"],
-
+  "Mounts": [
+        {
+            "Source": "/mnt",
+            "Destination": "/mnt",
+            "Type": "bind",
+            "Options": ["rbind"]
+        }
+    ],
   "Env": [
     {
       "Name": "ROOT_PATH",
       "Description": "Root path for the plugin volumes",
       "Settable": ["value"],
-      "Value": "dpvt"
+      "Value": "/mnt/swarm-cephfs"
     },
     {
       "Name": "DEBUG",
@@ -35,6 +42,5 @@
       "CAP_SYS_MODULE"
     ],
     "devices": null
-  },
-  "propagatedmount": "/run/docker/dpvt/"
+  }
 }
