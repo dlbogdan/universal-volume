@@ -37,5 +37,5 @@ RUN apt-get update && apt-get install -yq \
     && mkdir -p /run/docker/plugins
 
 
-COPY --from=go-builder /go/bin/docker-plugin-volume-test .
-CMD ["docker-plugin-volume-test"]
+COPY --from=go-builder /go/bin/univol .
+CMD ["univol"]
