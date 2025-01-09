@@ -1,4 +1,4 @@
-module github.com/dlbogdan/docker-plugin-volume-test
+module github.com/dlbogdan/universal-volume
 
 go 1.2
 
