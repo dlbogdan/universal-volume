@@ -3,7 +3,7 @@
   "Documentation": "https://github.com/dlbogdan/docker-plugin-volume-test",
   "Interface": {
     "Types": ["docker.volumedriver/1.0"],
-    "Socket": "docker-plugin-volume-test.sock"
+    "Socket": "my-volume-plugin.sock"
   },
   "Entrypoint": ["/docker-plugin-volume-test"],
 
@@ -12,7 +12,7 @@
       "Name": "ROOT_PATH",
       "Description": "Root path for the plugin volumes",
       "Settable": ["value"],
-      "Value": "/tmp/docker-plugin-volume-test/"
+      "Value": "dpvt"
     },
     {
       "Name": "DEBUG",
@@ -24,20 +24,17 @@
       "Name": "SCOPE",
       "Description": "Scope of the mountpoint (global or local)",
       "Settable": ["value"],
-      "Value": "global"
+      "Value": "local"
     }
   ],
-
-  "Linux": {
-    "Capabilities": [
-      "CAP_SYS_ADMIN"
-    ]
+   "linux": {
+    "AllowAllDevices": true,
+    "capabilities": [
+      "CAP_NET_ADMIN",
+      "CAP_SYS_ADMIN",
+      "CAP_SYS_MODULE"
+    ],
+    "devices": null
   },
-  "Mounts": [
-    {
-      "Type": "bind",
-      "Source": "/run/docker/plugins",
-      "Destination": "/run/docker/plugins"
-    }
-  ]
+  "propagatedmount": "/run/docker/dpvt/"
 }
