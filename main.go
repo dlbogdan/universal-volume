@@ -1,3 +1,6 @@
+//go:build linux
+// +build linux
+
 package main
 
 import (
@@ -45,13 +48,13 @@ func newMyDriver() *myDriver {
 	if envScope == "" {
 
 		// Default to global scope if SCOPE is not set
-		log.Println("SCOPE not set, using global")
+		log.Println("SCOPE variable not set, defaulting to \"global\"")
 		envScope = "global"
 	}
 
 	if envRootPath == "" {
 		// Default to /var/lib/myvolplugin if ROOT_PATH is not set
-		log.Println("ROOT_PATH not set, using /var/lib/myvolplugin")
+		log.Println("ROOT_PATH not set, defaulting to \"/var/lib/myvolplugin\"")
 		envRootPath = "/var/lib/myvolplugin"
 	}
 	if envScope == "global" {
