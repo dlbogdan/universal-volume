@@ -1,4 +1,4 @@
-PLUGIN_NAME=docker-plugin-volume-test
+PLUGIN_NAME=universal-volume
 PLUGIN_VERSION=1.0.0
 
 PLUGIN_PLATFORM=linux/amd64
@@ -12,7 +12,7 @@ clean:
 
 .PHONY: rootfs
 rootfs:
-	@echo "### docker build: rootfs ${PLUGIN_PLATFORM} image with docker-volume-rbd"
+	@echo "### docker build: rootfs ${PLUGIN_PLATFORM} image"
 	@docker build --platform ${PLUGIN_PLATFORM} -t ${PLUGIN_NAME}:rootfs .
 	@echo "### create rootfs directory in ./plugin/rootfs"
 	@mkdir -p ./plugin/rootfs

@@ -5,7 +5,7 @@
     "Types": ["docker.volumedriver/1.0"],
     "Socket": "univol.sock"
   },
-  "Entrypoint": ["/univol"],
+  "Entrypoint": ["/universal-volume"],
   "Mounts": [
         {
             "Source": "/mnt",
@@ -31,7 +31,7 @@
       "Name": "SCOPE",
       "Description": "Scope of the mountpoint (global or local)",
       "Settable": ["value"],
-      "Value": "local"
+      "Value": "global"
     }
   ],
    "linux": {

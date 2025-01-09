@@ -15,7 +15,7 @@ import (
 	"github.com/docker/go-plugins-helpers/volume"
 )
 
-const socketAddress = "/run/docker/plugins/my-volume-plugin.sock"
+const socketAddress = "/run/docker/plugins/univol.sock"
 
 func isMountpoint(path string) (bool, error) {
 	stat, err := os.Stat(path)
@@ -56,8 +56,8 @@ func newMyDriver() *myDriver {
 
 	if envRootPath == "" {
 		// Default to /var/lib/myvolplugin if ROOT_PATH is not set
-		log.Println("ROOT_PATH not set, defaulting to \"/var/lib/myvolplugin\"")
-		envRootPath = "/var/lib/myvolplugin"
+		log.Println("ROOT_PATH not set, defaulting to \"/mnt/univol\"")
+		envRootPath = "/mnt/univol"
 	}
 	if envScope == "global" {
 		var isMount bool
@@ -220,13 +220,7 @@ func main() {
 
 	// The first parameter is the "plugin name" (used to create the .sock file),
 	// the second is the group. 0 means 'root' by default.
-	log.Println("Starting my-volume-plugin on /run/docker/plugins/my-volume-plugin.sock ...")
-	//ceph-fuse --client_fs swarm_cephfs /mnt/swarm_cephfs/
-
-	// if _, err := os.Stat("/mnt/swarm_cephfs/volumes"); os.IsNotExist(err) {
-	// 	log.Println("Mounting cephfs")
-	// 	exec.Command("ceph-fuse", "--client_fs", "swarm_cephfs", "/mnt/swarm_cephfs").Run()
-	// }
+	log.Println("Starting universal-volume unix sock ...")
 
 	err := h.ServeUnix(socketAddress, 0)
 	if err != nil {
