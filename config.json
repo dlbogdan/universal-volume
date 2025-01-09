@@ -1,11 +1,11 @@
 {
-  "Description": "Docker-Plugin-Volume-Test",
-  "Documentation": "https://github.com/dlbogdan/docker-plugin-volume-test",
+  "Description": "Universal Volume Plugin",
+  "Documentation": "https://github.com/dlbogdan/universal-volume",
   "Interface": {
     "Types": ["docker.volumedriver/1.0"],
-    "Socket": "my-volume-plugin.sock"
+    "Socket": "univol.sock"
   },
-  "Entrypoint": ["/docker-plugin-volume-test"],
+  "Entrypoint": ["/univol"],
   "Mounts": [
         {
             "Source": "/mnt",
@@ -19,7 +19,7 @@
       "Name": "ROOT_PATH",
       "Description": "Root path for the plugin volumes",
       "Settable": ["value"],
-      "Value": "/mnt/swarm-cephfs"
+      "Value": "/mnt/univol"
     },
     {
       "Name": "DEBUG",
