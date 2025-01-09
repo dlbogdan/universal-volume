@@ -1,4 +1,3 @@
-# docker-plugin-volume-test
-testing docker engine plugin interface before writing the real driver
+# universal volume
 
-test commit
+docker volume plugin
