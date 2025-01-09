@@ -1,4 +1,4 @@
-
+WIP 
 # universal-volume
 
 A **Docker volume plugin** that automatically enumerates and manages directories under a user-defined **root path** on the host. Designed to be universally simple—no databases, no complicated setup—just point it to a root directory, and any subdirectory becomes a usable Docker volume.
@@ -19,7 +19,7 @@ A **Docker volume plugin** that automatically enumerates and manages directories
 
 ## Features
 
-- **Configurable Root Path**: Define `ROOT_PATH` (e.g., `/var/lib/universal-volume`) where all volumes reside.  
+- **Configurable Root Path**: Define `ROOT_PATH` (e.g., `/mnt/univol`) where all volumes reside.  
 - **Automatic Enumeration**: On `docker volume ls` or plugin queries, the plugin scans the root path for subdirectories and treats each as a volume.  
 - **Simple Local Storage**: No external DB or advanced network mount logic—just local host folders.  
 - **Persistent**: Volumes persist across Docker or plugin restarts (as long as folders remain in `ROOT_PATH`).  
@@ -29,10 +29,10 @@ A **Docker volume plugin** that automatically enumerates and manages directories
 
 ## How It Works
 
-1. **Root Directory**: You specify a `ROOT_PATH` (e.g., `/var/lib/universal-volume`).  
-2. **Create**: When `docker volume create -d universal-volume --name myvol` is called, the plugin creates a folder `/var/lib/universal-volume/myvol`.  
+1. **Root Directory**: You specify a `ROOT_PATH` (e.g., `/mnt/univol`).  
+2. **Create**: When `docker volume create -d universal-volume --name myvol` is called, the plugin creates a folder under the specified root path (e.g., `/var/lib/universal-volume/myvol`).  
 3. **Mount**: The plugin returns that path as the `Mountpoint`, which Docker bind-mounts into your container.  
-4. **Enumerate**: When Docker asks for a volume **list**, the plugin reads subfolders of `/var/lib/universal-volume` and reports each one as a volume.  
+4. **Enumerate**: When Docker asks for a volume **list**, the plugin reads subfolders of the root path and reports each one as a volume.  
 5. **Remove**: A `docker volume rm myvol` call removes the corresponding folder on disk.
 
 ---
@@ -41,71 +41,58 @@ A **Docker volume plugin** that automatically enumerates and manages directories
 
 1. **Build the Plugin Locally** (optional, if you want to tweak the source):
    ```bash
-   git clone https://github.com/<your-username>/universal-volume.git
+   git clone https://github.com/dlbogdan/universal-volume.git
    cd universal-volume
    docker build -t universal-volume-build .
    ```
 
 2. **Create the Managed Plugin**:
-   - Export the container filesystem to `rootfs/` (this is typically part of a script in the repo):
+   - Export the container filesystem to `rootfs/`:
      ```bash
      CONTAINER_ID=$(docker create universal-volume-build)
      mkdir -p rootfs
      docker export "$CONTAINER_ID" | tar -x -C rootfs
      docker rm -v "$CONTAINER_ID"
      ```
-   - Ensure you have a `config.json` at the top-level (beside `rootfs/`).  
+   - Ensure you have a **`config.json`** at the top-level (beside `rootfs/`), defining entrypoint/capabilities/etc.
    - Then create the plugin:
      ```bash
-     docker plugin create <your-dockerhub-username>/universal-volume:latest .
+     docker plugin create dlbogdan/universal-volume:latest .
      ```
 
 3. **Push the Plugin** (optional, to share it publicly):
    ```bash
-   docker plugin push <your-dockerhub-username>/universal-volume:latest
+   docker plugin push dlbogdan/universal-volume:latest
    ```
 
 4. **Install on Another Host**:
    ```bash
-   docker plugin install --grant-all-permissions <your-dockerhub-username>/universal-volume:latest \
-     ROOT_PATH=/var/lib/universal-volume
-   docker plugin enable <your-dockerhub-username>/universal-volume:latest
+   docker plugin install --grant-all-permissions dlbogdan/universal-volume:latest
    ```
-
-> **Note**: Replace `<your-dockerhub-username>` with your Docker Hub (or registry) username or organization name.
+   (You can now configure or enable the plugin in the next step.)
 
 ---
 
 ## Configuration
 
-The plugin reads the environment variable **`ROOT_PATH`** from the plugin’s `config.json` or from the user’s `docker plugin install` command. Example snippet in `config.json`:
+You can configure the plugin by setting environment variables via **`docker plugin set`**. Two typical variables are:
 
-```jsonc
-{
-  "Description": "Universal Volume Plugin",
-  "Interface": {
-    "Types": ["docker.volumedriver/1.0"],
-    "Socket": "universal-volume.sock"
-  },
-  "Entrypoint": ["/universal-volume/universal-volume"],
-  "Env": [
-    {
-      "Name": "ROOT_PATH",
-      // Let the user override the path at install time if desired
-      "Settable": ["value"],
-      "Value": "/var/lib/universal-volume"
-    }
-  ],
-  "Linux": {
-    "Capabilities": [
-      "CAP_SYS_ADMIN"
-    ]
-  }
-}
+- **`ROOT_PATH`**: Path on the host where volumes will be created (default might be `/var/lib/universal-volume`).  
+- **`SCOPE`**: Plugin scope (`local` or `global`).
+
+For example:
+
+```bash
+docker plugin set <your-dockerhub-username>/universal-volume:latest \
+  ROOT_PATH=/mnt/univol \
+  SCOPE=global
 ```
 
-- **Default Value**: `/var/lib/universal-volume`  
-- **Override**: Use `docker plugin install <plugin> ROOT_PATH=/your/custom/path`.
+Then enable the plugin:
+
+```bash
+docker plugin enable dlbogdan/universal-volume:latest
+```
 
 ---
 
@@ -115,25 +102,25 @@ The plugin reads the environment variable **`ROOT_PATH`** from the plugin’s `c
    ```bash
    docker volume create -d universal-volume --name mytest
    ```
-   - This creates a directory `/var/lib/universal-volume/mytest` (unless overridden via `ROOT_PATH`).
+   - Creates a directory under your configured `ROOT_PATH`, e.g. `/mnt/univol`.
 
 2. **Run a Container**:
    ```bash
    docker run --rm -it -v mytest:/data busybox sh
    ```
-   - The plugin returns `/var/lib/universal-volume/mytest` as the mount path, and Docker bind-mounts it into `/data` in the container.
+   - The plugin returns the local directory as the mount path, and Docker bind-mounts it to `/data`.
 
 3. **List Volumes**:
    ```bash
    docker volume ls
    ```
-   - The plugin scans the root directory and enumerates any subfolders as volumes.
+   - The plugin enumerates subdirectories in `ROOT_PATH`, reporting each as a volume.
 
 4. **Remove a Volume**:
    ```bash
    docker volume rm mytest
    ```
-   - The plugin removes the `/var/lib/universal-volume/mytest` folder from disk.
+   - Deletes the corresponding directory from disk.
 
 ---
 
@@ -141,28 +128,27 @@ The plugin reads the environment variable **`ROOT_PATH`** from the plugin’s `c
 
 - **Languages**: Primarily Go, using the [go-plugins-helpers](https://github.com/docker/go-plugins-helpers) library.
 - **Local Testing**:
-  1. Run `go build -o universal-volume .` to build the binary.  
-  2. Manually run the binary with `sudo ./universal-volume` (for direct testing without a managed plugin).  
-  3. Place a JSON file in `/etc/docker/plugins/universal-volume.json` pointing to your socket if needed:
+  1. `go build -o universal-volume .` to build the binary.  
+  2. Run it manually with `sudo ./universal-volume` for direct testing without a managed plugin.  
+  3. If Docker doesn’t automatically recognize the socket, place a JSON file like `/etc/docker/plugins/universal-volume.json` with:
      ```json
      {
        "Name": "universal-volume",
        "Addr": "unix:///run/docker/plugins/universal-volume.sock"
      }
      ```
-  4. Use `docker volume create -d universal-volume ...` to test.
-
+  4. Use `docker volume create -d universal-volume ...` to test locally.
 - **Contributions**:  
   1. Fork the repo  
-  2. Open a pull request describing your changes  
-  3. We review and merge
+  2. Open a Pull Request  
+  3. We’ll review & merge changes
 
 ---
 
 ## License
 
-This project is licensed under the [MIT License](./LICENSE). See the [LICENSE](./LICENSE) file for details.
+This project is licensed under the [MIT License](./LICENSE) (or whichever license you choose). See the [LICENSE](./LICENSE) file for details.
 
 ---
 
-**Enjoy your universal-volume plugin!** If you have questions or encounter issues, open an [issue on GitHub](https://github.com/your-username/universal-volume/issues). Contributions and feedback are always welcome.
+**Enjoy universal-volume!** If you have questions or encounter issues, open an [issue on GitHub](https://github.com/<your-username>/universal-volume/issues). Contributions and feedback are always welcome.
