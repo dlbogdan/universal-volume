@@ -20,14 +20,13 @@ RUN mkdir -p "$GOPATH/src" "$GOPATH/bin" && chmod -R 777 "$GOPATH"
 
 WORKDIR /go/src
 COPY go.mod go.sum ./
-RUN go mod download 
+RUN go mod tidy \ 
+    && go mod download 
 
 COPY go.* main.go ./
-#COPY . .
-#COPY lib /go/src/lib/
+
 
 RUN set -ex  \
- && go mod tidy \
  && go install
 
 
