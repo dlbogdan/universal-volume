@@ -15,6 +15,8 @@ import (
 	"github.com/docker/go-plugins-helpers/volume"
 )
 
+const socketAddress = "/run/docker/plugins/my-volume-plugin.sock"
+
 func isMountpoint(path string) (bool, error) {
 	stat, err := os.Stat(path)
 	if err != nil {
@@ -226,7 +228,7 @@ func main() {
 	// 	exec.Command("ceph-fuse", "--client_fs", "swarm_cephfs", "/mnt/swarm_cephfs").Run()
 	// }
 
-	err := h.ServeUnix("my-volume-plugin", 0)
+	err := h.ServeUnix(socketAddress, 0)
 	if err != nil {
 		log.Fatalf("Error serving volume plugin: %v", err)
 	}
