@@ -55,7 +55,7 @@ func newMyDriver() *myDriver {
 	}
 
 	if envRootPath == "" {
-		// Default to /var/lib/myvolplugin if ROOT_PATH is not set
+		// default  if ROOT_PATH is not set
 		log.Println("ROOT_PATH not set, defaulting to \"/mnt/univol\"")
 		envRootPath = "/mnt/univol"
 	}
@@ -84,7 +84,6 @@ func (d *myDriver) Create(req *volume.CreateRequest) error {
 	fullPath := filepath.Join(d.rootPath, req.Name)
 
 	// If the folder exists, do nothing.
-	// (Alternatively, return an error if you want to forbid overwriting.)
 	if _, err := os.Stat(fullPath); err == nil {
 		return nil
 	}
@@ -106,7 +105,6 @@ func (d *myDriver) Remove(req *volume.RemoveRequest) error {
 		return nil
 	}
 
-	// In a real plugin, you might check if it's still in use before removing.
 	if err := os.RemoveAll(fullPath); err != nil {
 		return fmt.Errorf("Failed to remove volume folder: %v", err)
 	}
@@ -146,7 +144,6 @@ func (d *myDriver) List() (*volume.ListResponse, error) {
 	entries, err := os.ReadDir(d.rootPath)
 	if err != nil {
 		// If the rootPath does not exist or can't be read, log it and return no volumes
-		// or return an error. Your choice depends on your plugin’s design.
 		return &volume.ListResponse{Volumes: vols}, nil
 	}
 
@@ -201,7 +198,7 @@ func (d *myDriver) Path(req *volume.PathRequest) (*volume.PathResponse, error) {
 }
 
 // Capabilities tells Docker which advanced features this driver supports.
-// For example, you could say Scope = "global" if the volumes are available
+//  Scope = "global" if the volumes are available
 // across multiple hosts in a cluster.
 func (d *myDriver) Capabilities() *volume.CapabilitiesResponse {
 	return &volume.CapabilitiesResponse{
@@ -214,8 +211,7 @@ func (d *myDriver) Capabilities() *volume.CapabilitiesResponse {
 func main() {
 	driver := newMyDriver()
 
-	// The go-plugins-helpers library offers a convenience method
-	// to create a Unix socket server for your driver.
+	// create a Unix socket server for your driver.
 	h := volume.NewHandler(driver)
 
 	// The first parameter is the "plugin name" (used to create the .sock file),
