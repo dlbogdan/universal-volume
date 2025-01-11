@@ -3,7 +3,6 @@ WIP
 
 A **Docker volume plugin** that automatically enumerates and manages directories under a user-defined **root path** on the host. Designed to be universally simple—no databases, no complicated setup—just point it to a root directory, and any subdirectory becomes a usable Docker volume.
 
-> **Key Benefit**: Volumes are persisted on disk and remain available across plugin restarts. If you manually create or remove folders in the root directory, they show up (or disappear) as volumes automatically.
 
 ## Table of Contents
 
@@ -21,7 +20,7 @@ A **Docker volume plugin** that automatically enumerates and manages directories
 
 - **Configurable Root Path**: Define `ROOT_PATH` (e.g., `/mnt/univol`) where all volumes reside.  
 - **Automatic Enumeration**: On `docker volume ls` or plugin queries, the plugin scans the root path for subdirectories and treats each as a volume.  
-- **Simple Local Storage**: No external DB or advanced network mount logic—just local host folders.  
+- **Simple Local/mounted distributed Storage**: No external DB or advanced network mount logic—just host folders.  
 - **Persistent**: Volumes persist across Docker or plugin restarts (as long as folders remain in `ROOT_PATH`).  
 - **Easy Installation**: Distributed as a Docker-managed plugin.  
 
