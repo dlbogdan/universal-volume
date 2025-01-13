@@ -42,5 +42,6 @@
       "CAP_SYS_MODULE"
     ],
     "devices": null
-  }
+  },
+   "propagatedmount": "/mnt"
 }
