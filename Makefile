@@ -1,5 +1,5 @@
-PLUGIN_NAME=universal-volume
-PLUGIN_VERSION=1.0.0
+PLUGIN_NAME=dlbogdan/universal-volume
+PLUGIN_VERSION=latest
 
 PLUGIN_PLATFORM=linux/amd64
 
